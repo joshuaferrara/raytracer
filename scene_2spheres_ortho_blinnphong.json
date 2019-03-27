@@ -1,0 +1,28 @@
+
+{
+  "camera_eye" : [0, 0, 0],
+  "camera_up" : [0, -1, 0],
+  "camera_view" : [0, 0, 1],
+  "x_resolution" : 400,
+  "y_resolution" : 400,
+  "viewport_left" : -1,
+  "viewport_top" : 1,
+  "viewport_right" : 1,
+  "viewport_bottom" : -1,
+  "background" : [0.7, 0.7, 0.9],
+  "orthographic_projection" : true,
+  "blinn_phong_shader" : {
+    "ambient_coefficient" : 0.05,
+    "diffuse_coefficient" : 0.5,
+    "specular_coefficient" : 0.25,
+    "ambient_color" : [1.0, 1.0, 1.0]
+  },
+  "lights" : [
+    { "location" : [-2.0, 2.0, -1.0], "intensity" : 1.1, "color" : [1.0, 1.0, 1.0] },
+    { "location" : [1.0, 0.0, -1.0], "intensity" : 0.25, "color" : [1.0, 1.0, 1.0] }
+  ],
+  "spheres" : [
+    { "color" : [1.0, 0.0, 0.0], "shininess" : 4.0, "center" : [-1.0, 0.0, 2.0], "radius" : 0.5},
+    { "color" : [0.0, 0.0, 1.0], "shininess" : 4.0, "center" : [1.0, 0.0, 8.0], "radius" : 0.5}
+  ]
+}
