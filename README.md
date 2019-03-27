@@ -3,6 +3,6 @@ Project 3: raytracer
 
 Group members:
 
-Ada Lovelace adalovelace@csu.fullerton.edu
+Josh Ferrara joshferrara@csu.fullerton.edu
 
-Charles Babbage charlesbab@csu.fullerton.edu
+Stacey Frasier stacey726@csu.fullerton.edu
