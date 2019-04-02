@@ -124,49 +124,59 @@ public:
     return elements_[i];
   }
 
+  //Add rhs to vector
   constexpr same_type operator+(const same_type& rhs) const noexcept {
-    // TODO: Rewrite the body of this function so that it actually works.
-    // That includes rewriting the return statement.
-    // After you do that, delete this comment.
-    return same_type();
+    same_type result;
+    for (int i = 0; i < elements_.size(); i++) {
+      result[i] = elements_[i] + rhs.elements_[i];
+    }
+
+    return result;
   }
 
+  //Positive -> Negative
   constexpr same_type operator-() const noexcept {
-    // TODO: Rewrite the body of this function so that it actually works.
-    // That includes rewriting the return statement.
-    // After you do that, delete this comment.
-    return same_type();
+    same_type result;
+    for (int i = 0; i < elements_.size(); i++) {
+      result[i] = -1 * elements_[i];
+    }
+    return result;
   }
 
+  //Subtract rhs from vector
   constexpr same_type operator-(const same_type& rhs) const noexcept {
-    // TODO: Rewrite the body of this function so that it actually works.
-    // That includes rewriting the return statement.
-    // After you do that, delete this comment.
-    return same_type();
+    same_type result;
+    for (int i = 0; i < elements_.size(); i++) {
+      result[i] = elements_[i] - rhs.elements_[i];
+    }
+    return result;
   }
 
   // Vector-scalar product.
   constexpr same_type operator*(scalar_type rhs) const noexcept {
-    // TODO: Rewrite the body of this function so that it actually works.
-    // That includes rewriting the return statement.
-    // After you do that, delete this comment.
-    return same_type();
+    same_type result;
+    for (int i = 0; i < elements_.size(); i++) {
+      result[i] = elements_[i] * rhs;
+    }
+    return result;
   }
 
   // Vector-vector product (dot product).
   constexpr scalar_type operator*(const same_type& rhs) const noexcept {
-    // TODO: Rewrite the body of this function so that it actually works.
-    // That includes rewriting the return statement.
-    // After you do that, delete this comment.
-    return 0;
+    scalar_type result = 0;
+    for (int i = 0; i < elements_.size(); i++) {
+      result += elements_[i] * rhs.elements_[i];
+    }
+    return result;
   }
 
   // Vector divided by scalar.
   constexpr same_type operator/(scalar_type rhs) const noexcept {
-    // TODO: Rewrite the body of this function so that it actually works.
-    // That includes rewriting the return statement.
-    // After you do that, delete this comment.
-    return same_type();
+    same_type result;
+    for (int i = 0; i < elements_.size(); i++) {
+      result[i] = elements_[i] / rhs;
+    }
+    return result;
   }
 
   // Stream insertion operator, for printing.
@@ -186,14 +196,16 @@ public:
   // Approximate equality.
   ////////
 
-  // Return true iff each element of this vector is approximately equal to
+  // Return true if each element of this vector is approximately equal to
   // the corresponding element of other, using delta, as determined by
   // gfx::approx_equal.
   constexpr bool approx_equal(const same_type& other, scalar_type delta) const noexcept {
-    // TODO: Rewrite the body of this function so that it actually works.
-    // That includes rewriting the return statement.
-    // After you do that, delete this comment.
-    return false;
+    for (int i = 0; i < elements_.size(); i++) {
+      if(!(gfx::approx_equal<scalar_type>(elements_[i], other.elements_[i], delta))) {
+        return false;
+      }
+    }
+    return true;
   }
 
   ////////
@@ -229,10 +241,16 @@ public:
     static_assert(NEW_DIMENSION > DIMENSION,
                   "new dimension must be larger than old dimension");
 
-    // TODO: Rewrite the body of this function so that it actually works.
-    // That includes rewriting the return statement.
-    // After you do that, delete this comment.
-    return vector<scalar_type, NEW_DIMENSION>();
+    gfx::vector<scalar_type, NEW_DIMENSION> result;
+    for (int i = 0; i < NEW_DIMENSION; i++) {
+      if(i < DIMENSION) { 
+        result[i] = elements_[i];
+      }
+      else {
+        result[i] = default_value;
+      }
+    }
+    return result;
   }
 
   // Return a vector of size NEW_DIMENSION, based on this vector.
@@ -245,10 +263,11 @@ public:
     static_assert(NEW_DIMENSION < DIMENSION,
                   "new dimension must be smaller than old dimension");
 
-    // TODO: Rewrite the body of this function so that it actually works.
-    // That includes rewriting the return statement.
-    // After you do that, delete this comment.
-    return vector<scalar_type, NEW_DIMENSION>();
+    gfx::vector<scalar_type, NEW_DIMENSION> result;
+    for (int i = 0; i < NEW_DIMENSION; i++) { 
+      result[i] = elements_[i];
+    }
+    return result;
   }
 
   // Return a vector of size NEW_DIMENSION, based on this vector.
@@ -262,10 +281,11 @@ public:
                   "new dimension cannot be larger than old dimension");
     assert((start + NEW_DIMENSION) <= DIMENSION);
 
-    // TODO: Rewrite the body of this function so that it actually works.
-    // That includes rewriting the return statement.
-    // After you do that, delete this comment.
-    return vector<scalar_type, NEW_DIMENSION>();
+    gfx::vector<scalar_type, NEW_DIMENSION> result;
+    for (int i = 0; i < NEW_DIMENSION; i++) { 
+      result[i] = elements_[start + i];
+    }
+    return result;
   }
 
   // Convert this vector to a column matrix, i.e. a matrix of height
@@ -290,10 +310,11 @@ public:
     static_assert(3 == DIMENSION,
                   "cross product is only defined for 3D vectors");
 
-    // TODO: Rewrite the body of this function so that it actually works.
-    // That includes rewriting the return statement.
-    // After you do that, delete this comment.
-    return same_type();
+    same_type result;
+    result[0] = (elements_[1] * rhs[2]) - (elements_[2] * rhs[1]);
+    result[1] = (elements_[2] * rhs[0]) - (elements_[0] * rhs[2]);
+    result[2] = (elements_[0] * rhs[1]) - (elements_[1] * rhs[0]);
+    return result;
   }
 
   // Fill; assign every element the value x.
@@ -302,44 +323,41 @@ public:
   // Return true iff this is a unit vector, i.e. the length of this vector is
   // approximately equal to 1, within delta.
   bool is_unit(scalar_type delta) const noexcept {
-    // TODO: Rewrite the body of this function so that it actually works.
-    // That includes rewriting the return statement.
-    // After you do that, delete this comment.
-    return false;
+    return gfx::approx_equal<scalar_type>(1, magnitude(), delta);
   }
 
   // Return true iff every element of this vector is == 0.
   constexpr bool is_zero() const noexcept {
+    using namespace std::placeholders;
     return std::all_of(elements_.begin(), elements_.end(),
-                       std::bind(std::equal_to{}, std::placeholders::_1, 0));
+                       std::bind(std::equal_to{}, _1, 0));
   }
 
   // Return the magnitude of this vector, squared (raised to the second power).
   // Computing this quantity does not require a square root, so it is faster
   // than magnitude().
   constexpr scalar_type magnitude_squared() const noexcept {
-    // TODO: Rewrite the body of this function so that it actually works.
-    // That includes rewriting the return statement.
-    // After you do that, delete this comment.
-    return 0;
+    scalar_type result = 0.0;
+    for (int i = 0; i < elements_.size(); i++) {
+      result += elements_[i] * elements_[i];
+    }
+    return result;
   }
 
   // Return the magnitude (length) of this vector.
   scalar_type magnitude() const noexcept {
-    // TODO: Rewrite the body of this function so that it actually works.
-    // That includes rewriting the return statement.
-    // After you do that, delete this comment.
-    return 0;
+    return sqrtf(magnitude_squared());
   }
 
   // Return a version of this vector that has been normalized.
   // In other words, return a vector with magnitude 1.0, and the same direction
   // as this vector.
   same_type normalized() const noexcept {
-    // TODO: Rewrite the body of this function so that it actually works.
-    // That includes rewriting the return statement.
-    // After you do that, delete this comment.
-    return same_type();
+    same_type result;
+    for (int i = 0; i < elements_.size(); i++) {
+      result[i] = elements_[i] / magnitude();
+    }
+    return result;
   }
 };
 
@@ -447,34 +465,46 @@ public:
   }
 
   constexpr same_type operator+ (const same_type& rhs) const noexcept {
-    // TODO: Rewrite the body of this function so that it actually works.
-    // That includes rewriting the return statement.
-    // After you do that, delete this comment.
-    return same_type();
+    same_type result;
+    for (int i = 0; i < HEIGHT; ++i) {
+      for (int j = 0; j < WIDTH; ++j) {
+        result[i][j] = rows_[i][j] + rhs.rows_[i][j];
+      }
+    }
+    return result;
   }
 
   // Negation.
   constexpr same_type operator- () const noexcept {
-    // TODO: Rewrite the body of this function so that it actually works.
-    // That includes rewriting the return statement.
-    // After you do that, delete this comment.
-    return same_type();
+    same_type result;
+    for (int i = 0; i < HEIGHT; ++i) {
+      for (int j = 0; j < WIDTH; ++j) {
+        result[i][j] = -rows_[i][j];
+      }
+    }
+    return result;
   }
 
   // Matrix-matrix subtraction.
   constexpr same_type operator- (const same_type& rhs) const noexcept {
-    // TODO: Rewrite the body of this function so that it actually works.
-    // That includes rewriting the return statement.
-    // After you do that, delete this comment.
-    return same_type();
+    same_type result;
+    for (int i = 0; i < HEIGHT; ++i) {
+      for (int j = 0; j < WIDTH; ++j) {
+        result[i][j] = rows_[i][j] - rhs.rows_[i][j];
+      }
+    }
+    return result;
   }
 
   // Matrix-scalar multiplication.
   constexpr same_type operator* (const scalar_type rhs) const noexcept {
-    // TODO: Rewrite the body of this function so that it actually works.
-    // That includes rewriting the return statement.
-    // After you do that, delete this comment.
-    return same_type();
+    same_type result;
+    for (int i = 0; i < HEIGHT; ++i) {
+      for (int j = 0; j < WIDTH; ++j) {
+        result[i][j] = rows_[i][j] * rhs;
+      }
+    }
+    return result;
   }
 
   // Matrix-matrix multiplication.
@@ -486,19 +516,25 @@ public:
   constexpr
   matrix<scalar_type, HEIGHT, RESULT_WIDTH>
   operator* (const matrix<scalar_type, WIDTH, RESULT_WIDTH>& rhs) const noexcept {
+    gfx::matrix<scalar_type, HEIGHT, RESULT_WIDTH> result;
+    for (int i = 0; i < HEIGHT; i++) {
+      for (int j = 0; j < RESULT_WIDTH; j++) {
+        result[i][j] = rows_[i] * rhs.column_vector(j);
+      }
+    }
+    return result;
 
-    // TODO: Rewrite the body of this function so that it actually works.
-    // That includes rewriting the return statement.
-    // After you do that, delete this comment.
-    return matrix<scalar_type, HEIGHT, RESULT_WIDTH>();
   }
 
   // Division by a scalar.
   constexpr same_type operator/ (scalar_type rhs) const noexcept {
-    // TODO: Rewrite the body of this function so that it actually works.
-    // That includes rewriting the return statement.
-    // After you do that, delete this comment.
-    return same_type();
+    same_type result;
+    for (int i = 0; i < HEIGHT; ++i) {
+      for (int j = 0; j < WIDTH; ++j) {
+        result[i][j] = rows_[i][j] / rhs;
+      }
+    }
+    return result;
   }
 
   // Stream insertion operator, for printing.
@@ -524,10 +560,12 @@ public:
   // the corresponding element of other, using delta, as determined by
   // gfx::approx_equal.
   constexpr bool approx_equal(const same_type& other, scalar_type delta) const noexcept {
-    // TODO: Rewrite the body of this function so that it actually works.
-    // That includes rewriting the return statement.
-    // After you do that, delete this comment.
-    return false;
+    for (int i = 0; i < HEIGHT; ++i) {
+      if(!rows_[i].approx_equal(other[i], delta)) {
+        return false;
+      }
+    }
+    return true;
   }
 
   ////////
@@ -583,10 +621,11 @@ public:
 
     assert(is_column(c));
 
-    // TODO: Rewrite the body of this function so that it actually works.
-    // That includes rewriting the return statement.
-    // After you do that, delete this comment.
-    return matrix<scalar_type, HEIGHT, 1>();
+    gfx::matrix<scalar_type, HEIGHT, 1> result;
+    for (int i = 0; i < HEIGHT; i++) {
+      result[i] = rows_[i][c];
+    }
+    return result;
   }
 
   // Return column number c of this matrix as a vector.
@@ -595,10 +634,11 @@ public:
 
     assert(is_column(c));
 
-    // TODO: Rewrite the body of this function so that it actually works.
-    // That includes rewriting the return statement.
-    // After you do that, delete this comment.
-    return vector<scalar_type, HEIGHT>();
+    gfx::vector<scalar_type, HEIGHT> result;
+    for (int i = 0; i < HEIGHT; i++) {
+      result[i] = rows_[i][c];
+    }
+    return result;
   }
 
   // Return row number r of this matrix as a height-1 matrix.
@@ -607,10 +647,11 @@ public:
 
     assert(is_row(r));
 
-    // TODO: Rewrite the body of this function so that it actually works.
-    // That includes rewriting the return statement.
-    // After you do that, delete this comment.
-    return matrix<scalar_type, 1, WIDTH>();
+    gfx::matrix<scalar_type, 1, WIDTH> result;
+    for (int i = 0; i < WIDTH; i++) {
+      result[0][i] = rows_[r][i];
+    }
+    return result;
   }
 
   // Return row number r of this matrix as a vector.
@@ -634,10 +675,13 @@ public:
     assert((top_row + NEW_HEIGHT) <= HEIGHT);
     assert((left_column + NEW_WIDTH) <= WIDTH);
 
-    // TODO: Rewrite the body of this function so that it actually works.
-    // That includes rewriting the return statement.
-    // After you do that, delete this comment.
-    return matrix<scalar_type, NEW_HEIGHT, NEW_WIDTH>();
+    matrix<scalar_type, NEW_HEIGHT, NEW_WIDTH> result;
+    for (int r = top_row, new_r = 0; r < HEIGHT && new_r < NEW_HEIGHT; r++, new_r++) {
+      for (int c = left_column, new_c = 0; c < WIDTH && new_c < NEW_WIDTH; c++, new_c++) {
+        result[new_r][new_c] = rows_[r][c];
+      }
+    } 
+    return result;
   }
 
   ////////
@@ -653,10 +697,16 @@ public:
     static_assert((WIDTH == 2) || (WIDTH == 3),
 	                "determinant only implemented for 2x2 and 3x3 matrices");
 
-    // TODO: Rewrite the body of this function so that it actually works.
-    // That includes rewriting the return statement.
-    // After you do that, delete this comment.
-    return 0;
+    scalar_type result = 0;
+    if (WIDTH == 2) {
+      result = rows_[0][0] * rows_[1][1] - rows_[0][1] * rows_[1][0];
+    }
+    else if (WIDTH == 3) {
+      result = rows_[0][0] * (rows_[1][1] * rows_[2][2] - rows_[1][2] * rows_[2][1]);
+      result -= rows_[0][1] * (rows_[1][0] * rows_[2][2] - rows_[1][2] * rows_[2][0]);
+      result += rows_[0][2] * (rows_[1][0] * rows_[2][1] - rows_[1][1] * rows_[2][0]);
+    }
+    return result;
   }
 
   ////////
@@ -675,10 +725,46 @@ public:
     static_assert((WIDTH == 2) || (WIDTH == 3),
                   "solve is only implemented for 2x2 and 3x3 matrices");
 
-    // TODO: Rewrite the body of this function so that it actually works.
-    // That includes rewriting the return statement.
-    // After you do that, delete this comment.
-    return vector<scalar_type, HEIGHT>();
+    gfx::vector<scalar_type, HEIGHT> result;
+    scalar_type coDet = determinant();
+    same_type x_sub = (*this);
+    same_type y_sub = (*this);
+    same_type z_sub = (*this);
+
+    if (WIDTH == 2) {
+      x_sub[0][0] = b[0];
+      x_sub[1][0] = b[1];
+      y_sub[0][1] = b[0];
+      y_sub[1][1] = b[1];
+      
+      scalar_type x_det = x_sub.determinant();
+      scalar_type y_det = y_sub.determinant();
+      
+      result[0] = x_det / coDet;
+      result[1] = y_det / coDet;
+    }
+    else if (WIDTH == 3) {
+      x_sub[0][0] = b[0];
+      x_sub[1][0] = b[1];
+      x_sub[2][0] = b[2];
+      y_sub[0][1] = b[0];
+      y_sub[1][1] = b[1];
+      y_sub[2][1] = b[2];
+      z_sub[0][2] = b[0];
+      z_sub[1][2] = b[1];
+      z_sub[2][2] = b[2];
+
+      scalar_type x_det = x_sub.determinant();
+      scalar_type y_det = y_sub.determinant();
+      scalar_type z_det = z_sub.determinant();
+      
+      result[0] = x_det / coDet;
+      result[1] = y_det / coDet;
+      result[2] = z_det / coDet;
+    }
+
+
+    return result;
   }
 
   ////////
@@ -695,18 +781,23 @@ public:
   // matrix.
   // This function is only defined for square matrices.
   static constexpr same_type identity() noexcept {
-    // TODO: Rewrite the body of this function so that it actually works.
-    // That includes rewriting the return statement.
-    // After you do that, delete this comment.
-    return same_type();
+    same_type result;
+    result.fill(0);
+    for (int i = 0; i < result.height(); i++) {
+      result[i][i] = 1;
+    }
+    return result;
   }
 
   // Return the transpose of this matrix, i.e. exchange rows with columns.
   constexpr matrix<scalar_type, WIDTH, HEIGHT> transpose() const noexcept {
-    // TODO: Rewrite the body of this function so that it actually works.
-    // That includes rewriting the return statement.
-    // After you do that, delete this comment.
-    return matrix<scalar_type, WIDTH, HEIGHT>();
+    gfx::matrix<scalar_type, WIDTH, HEIGHT> result;
+    for (int i = 0; i < HEIGHT; i++) {
+      for(int j = 0; j < WIDTH; j++) {
+        result[j][i] = rows_[i][j];
+      }
+    }
+    return result;
   }
 };
 
@@ -717,24 +808,30 @@ template <typename scalar_type> using matrix4x4 = matrix<scalar_type, 4, 4>;
 
 // Now we can finally define vector::to_column_matrix and vector::to_row_matrix.
 
+// Convert this vector to a column matrix, i.e. a matrix of height
+  // DIMENSION and width 1.
+  // The definition of this function needs to come after gfx::matrix, and is
+  // near the bottom of this source file.
 template <typename scalar_type,
           size_t DIMENSION>
 constexpr matrix<scalar_type, DIMENSION, 1>
 vector<scalar_type, DIMENSION>::to_column_matrix() const noexcept {
-  // TODO: Rewrite the body of this function so that it actually works.
-  // That includes rewriting the return statement.
-  // After you do that, delete this comment.
-  return matrix<scalar_type, DIMENSION, 1>();
+  gfx::matrix<scalar_type, DIMENSION, 1> result;
+  for (int i = 0; i < DIMENSION; i++) {
+    result[i][0] = elements_[i];
+  }
+  return result;
 }
 
 template <typename scalar_type,
           size_t DIMENSION>
 constexpr matrix<scalar_type, 1, DIMENSION>
 vector<scalar_type, DIMENSION>::to_row_matrix() const noexcept {
-  // TODO: Rewrite the body of this function so that it actually works.
-  // That includes rewriting the return statement.
-  // After you do that, delete this comment.
-  return matrix<scalar_type, 1, DIMENSION>();
+  gfx::matrix<scalar_type, 1, DIMENSION> result;
+  for (int i = 0; i < DIMENSION; i++) {
+    result[0][i] = elements_[i];
+  }
+  return result;
 }
 
 } // namespace gfx
