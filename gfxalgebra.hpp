@@ -330,7 +330,7 @@ public:
   constexpr bool is_zero() const noexcept {
     using namespace std::placeholders;
     return std::all_of(elements_.begin(), elements_.end(),
-                       std::bind(std::equal_to{}, _1, 0));
+                       std::bind(std::equal_to{}, std::placeholders::_1, 0));
   }
 
   // Return the magnitude of this vector, squared (raised to the second power).
