@@ -966,7 +966,9 @@ vector2<double> viewport::uv(size_t x, size_t y) const noexcept {
   // Hint: This process is described in section 4.3.1, specifically
   // equation (4.1). My implementation is only two lines long.
   //
-  // i = 0; i = 1
+  // i = 0; i = 1; vector_x = {u, v}
+  // u = l + (r+l)(i + 0.5)/ nx
+  // v = b + (t-b)(j + 0.5)/ ny
   
   vector2<double> vector_x = { left() + (right() + left()) * ((0.5) / double(x)), 
     bottom() + (top() - bottom()) * ((1 + 0.5) / double(y)) };
