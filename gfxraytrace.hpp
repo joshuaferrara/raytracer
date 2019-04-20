@@ -876,15 +876,20 @@ std::optional<intersection> scene::intersect(const view_ray& ray) const noexcept
   bool hit = false;
   double t0 = 0;
   double t1 = 1;
+  
+  std::optional<intersection> option, option_empty;
   for(size_t oh = 0; oh < objects_.size(); oh++) {
-    <optional>intersection intersects= *objects_[oh]->intersect(ray, t0, t1);
-    if(intersects_ == 0) {
+    option = *objects_[oh]->intersect(ray, t0, t1);
+    if(option.has_value()) {
       hit = true;
-      intersects_.t() = t0;
+      t1 = option->t();
     }
   }
+  if(hit) {
+    return option;
+  }
 
-  return intersects;
+  return option_empty;
 }
 
 hdr_image scene::render() const noexcept {
