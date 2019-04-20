@@ -873,6 +873,10 @@ std::optional<intersection> scene::intersect(const view_ray& ray) const noexcept
   // ray hits the object; and if so, update the t range. At the end,
   // return an optional that contains the nearest intersection, or an empty
   // optional when there was no hit.
+  bool hit = false;
+  for(size_t oh = 0; oh < objects_.size(); oh++) {
+    *objects_[oh]->intersect(ray, 0, 1);
+  }
 
   return std::nullopt;
 }
