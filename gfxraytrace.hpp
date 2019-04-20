@@ -874,8 +874,8 @@ std::optional<intersection> scene::intersect(const view_ray& ray) const noexcept
   // return an optional that contains the nearest intersection, or an empty
   // optional when there was no hit.
   bool hit = false;
-  double t0 = 0;
-  double t1 = 1;
+  double t0 = INT_MIN;
+  double t1 = INT_MAX;
   
   std::optional<intersection> option, option_empty;
   for(size_t oh = 0; oh < objects_.size(); oh++) {
@@ -885,11 +885,8 @@ std::optional<intersection> scene::intersect(const view_ray& ray) const noexcept
       t1 = option->t();
     }
   }
-  if(hit) {
-    return option;
-  }
-
-  return option_empty;
+  if(hit) { return option; }
+  else { return option_empty; }
 }
 
 hdr_image scene::render() const noexcept {
@@ -949,11 +946,13 @@ constexpr camera::camera(const vector3<double>& eye,
 
   // TODO: Fill in the body of this function, then delete these
   // skeleton comments.
+  
   //
   // Hint: This process is described in section 4.3 on pages
   // 73-74. Those pages refer you back to the vector math described in
   // Section 2.4.7. Don't forget that _w, _u, and _v all need to be
   // normalized. My implementation is only 3 lines long.
+
 }
 
 vector2<double> viewport::uv(size_t x, size_t y) const noexcept {
@@ -961,10 +960,16 @@ vector2<double> viewport::uv(size_t x, size_t y) const noexcept {
   // TODO: Fill in the body of this function, then delete these
   // skeleton comments.
   //
+  // Map an (x, y) screen coordinate to a (u, v) coordinate in
+  // [0, 1]^2. Return a 2D vector x, with u in x[0] and v in x[1];
+  //
   // Hint: This process is described in section 4.3.1, specifically
   // equation (4.1). My implementation is only two lines long.
-
-  return vector2<double>();
+  
+  vector2<double> x = { left + (right + left) * ((i + 0.5) / double(x)), 
+    bottom + (top - bottom) * ((j + 0.5) / double(y)) };
+  
+  return x;
 }
 
 view_ray orthographic_projection::compute_view_ray(const camera& c,
