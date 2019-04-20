@@ -952,7 +952,11 @@ constexpr camera::camera(const vector3<double>& eye,
   // 73-74. Those pages refer you back to the vector math described in
   // Section 2.4.7. Don't forget that _w, _u, and _v all need to be
   // normalized. My implementation is only 3 lines long.
-
+  // Note: eye = eye location
+  _eye = eye;
+  _w = (view_direction / view_direction.normalized()).normalized();
+  _u = (up.cross(_w) / (up.cross(_w)).normalized()).normalized();
+  _v = (_w.cross(u)).normalized;
 }
 
 vector2<double> viewport::uv(size_t x, size_t y) const noexcept {
@@ -986,6 +990,9 @@ view_ray orthographic_projection::compute_view_ray(const camera& c,
   // Hint: This process is described in section 4.3.1, specifically
   // the pseudocode on page 75. My implementation is only two lines
   // long.
+
+
+  
   return view_ray(gfx::vector3<double>(), gfx::vector3<double>());
 }
 
