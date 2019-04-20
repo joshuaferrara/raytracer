@@ -874,11 +874,17 @@ std::optional<intersection> scene::intersect(const view_ray& ray) const noexcept
   // return an optional that contains the nearest intersection, or an empty
   // optional when there was no hit.
   bool hit = false;
+  double t0 = 0;
+  double t1 = 1;
   for(size_t oh = 0; oh < objects_.size(); oh++) {
-    *objects_[oh]->intersect(ray, 0, 1);
+    <optional>intersection intersects= *objects_[oh]->intersect(ray, t0, t1);
+    if(intersects_ == 0) {
+      hit = true;
+      intersects_.t() = t0;
+    }
   }
 
-  return std::nullopt;
+  return intersects;
 }
 
 hdr_image scene::render() const noexcept {
