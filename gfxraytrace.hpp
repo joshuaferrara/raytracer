@@ -965,11 +965,13 @@ vector2<double> viewport::uv(size_t x, size_t y) const noexcept {
   //
   // Hint: This process is described in section 4.3.1, specifically
   // equation (4.1). My implementation is only two lines long.
+  //
+  // i = 0; i = 1
   
-  vector2<double> x = { left + (right + left) * ((i + 0.5) / double(x)), 
-    bottom + (top - bottom) * ((j + 0.5) / double(y)) };
+  vector2<double> vector_x = { left() + (right() + left()) * ((0.5) / double(x)), 
+    bottom() + (top() - bottom()) * ((1 + 0.5) / double(y)) };
   
-  return x;
+  return vector_x;
 }
 
 view_ray orthographic_projection::compute_view_ray(const camera& c,
