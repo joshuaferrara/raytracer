@@ -1046,7 +1046,49 @@ std::optional<intersection>
   // the intersection, make sure that you compare gamma and beta
   // precisely as described in the pseudocode on the bottom of page
   // 79.
-  return std::nullopt;
+
+  vector3<double> d = ray.direction();
+  vector3<double> e = ray.origin();
+  double x_a = a_[0];
+  double x_b = b_[0];
+  double x_c = c_[0];
+  double x_d = d[0];
+  double x_e = e[0];
+
+  double y_a = a_[1];
+  double y_b = b_[1];
+  double y_c = c_[1];
+  double y_d = d[1];
+  double y_e = e[1];
+
+  double z_a = a_[2];
+  double z_b = b_[2];
+  double z_c = c_[2];
+  double z_d = d[2];
+  double z_e = e[2];
+
+  gfx::matrix<double, 3, 3> aMatrix{
+    x_a - x_b, x_a - x_c, x_d,
+    y_a - y_b, y_a - y_c, y_d,
+    z_a - z_b, z_a - z_c, z_d
+  };
+
+  gfx::vector<double, 3> rhsMatrix{x_a - x_e, y_a - y_e, z_a - z_e};
+
+  vector3<double> solution = aMatrix.solve(rhsMatrix);
+  double beta = solution[0];
+  double gamma = solution[1];
+  double t = solution[2];
+
+  if (t < t_min || t > t_upper_bound) return std::nullopt;
+  if (gamma < 0 || gamma > 1) return std::nullopt;
+  if (beta < 0 || beta > 1 - gamma) return std::nullopt;
+
+  vector3<double> p = ray.origin() + ray.direction() * t;
+  vector3<double> normal = p.normalized();
+
+  std::optional<intersection> hit = intersection(this, p, normal, t);
+  return hit;
 }
 
 } // namespace gfx
