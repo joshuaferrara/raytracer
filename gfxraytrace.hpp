@@ -951,17 +951,7 @@ vector2<double> viewport::uv(size_t x, size_t y) const noexcept {
 view_ray orthographic_projection::compute_view_ray(const camera& c,
 					                                         double u,
 					                                         double v) const noexcept {
-
-  // TODO: Fill in the body of this function, then delete these
-  // skeleton comments.
-  //
-  // Hint: This process is described in section 4.3.1, specifically
-  // the pseudocode on page 75. My implementation is only two lines
-  // long.
-
-
-  
-  return view_ray(gfx::vector3<double>(), gfx::vector3<double>());
+  return view_ray(c.eye() +  c.u() * u + c.v() * v, c.w());
 }
 
 view_ray perspective_projection::compute_view_ray(const camera& c,
