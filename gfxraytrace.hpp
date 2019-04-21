@@ -953,8 +953,7 @@ constexpr camera::camera(const vector3<double>& eye,
   // Section 2.4.7. Don't forget that _w, _u, and _v all need to be
   // normalized. My implementation is only 3 lines long.
   // Note: eye = eye location
-  _eye = eye;
-  _w = (view_direction / view_direction.normalized()).normalized();
+  _w = (view_direction / view_direction.magnitude()).normalized();
   _u = (up.cross(_w) / (up.cross(_w)).normalized()).normalized();
   _v = (_w.cross(u)).normalized;
 }
