@@ -975,9 +975,9 @@ vector2<double> viewport::uv(size_t x, size_t y) const noexcept {
   // v = b + (t-b)(j + 0.5)/ ny
   double u = left() + (right() + left()) * ((0.5) / double(x));
   double v = bottom() + (top() - bottom()) * ((1 + 0.5) / double(y));
-  vector2<double> vec_X { { u, 0 }, 
-                          { v, 0 } };
-  return vec_X;
+  vector2<double> _x({u, 0, v, 0});
+
+  return _x;
 }
 
 view_ray orthographic_projection::compute_view_ray(const camera& c,
