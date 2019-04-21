@@ -942,23 +942,9 @@ constexpr camera::camera(const vector3<double>& eye,
 }
 
 vector2<double> viewport::uv(size_t x, size_t y) const noexcept {
-
-  // TODO: Fill in the body of this function, then delete these
-  // skeleton comments.
-  //
-  // Map an (x, y) screen coordinate to a (u, v) coordinate in
-  // [0, 1]^2. Return a 2D vector x, with u in x[0] and v in x[1];
-  //
-  // Hint: This process is described in section 4.3.1, specifically
-  // equation (4.1). My implementation is only two lines long.
-  //
-  // i = 0; i = 1; vector_x = {u, v}
-  // u = l + (r+l)(i + 0.5)/ nx
-  // v = b + (t-b)(j + 0.5)/ ny
-  double u = left() + (right() + left()) * ((0.5) / double(x));
-  double v = bottom() + (top() - bottom()) * ((1 + 0.5) / double(y));
-  vector2<double> _x({u, 0, v, 0});
-
+  double u = left() + (right() - left()) * ((double) x + 0.5) / x_resolution();
+  double v = bottom() + (top() - bottom()) * ((double) y + 0.5) / y_resolution();
+  vector2<double> _x({u, v});
   return _x;
 }
 
