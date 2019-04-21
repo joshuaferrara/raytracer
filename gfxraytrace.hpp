@@ -973,11 +973,11 @@ vector2<double> viewport::uv(size_t x, size_t y) const noexcept {
   // i = 0; i = 1; vector_x = {u, v}
   // u = l + (r+l)(i + 0.5)/ nx
   // v = b + (t-b)(j + 0.5)/ ny
-  
-  vector2<double> vector_x = { left() + (right() + left()) * ((0.5) / double(x)), 
-    bottom() + (top() - bottom()) * ((1 + 0.5) / double(y)) };
-  
-  return vector_x;
+  double u = left() + (right() + left()) * ((0.5) / double(x));
+  double v = bottom() + (top() - bottom()) * ((1 + 0.5) / double(y));
+  vector2<double> vec_X { { u, 0 }, 
+                          { v, 0 } };
+  return vec_X;
 }
 
 view_ray orthographic_projection::compute_view_ray(const camera& c,
@@ -1019,7 +1019,7 @@ hdr_rgb flat_shader::shade(const scene& scene,
   // Hint: Just return the color of the intersecting object,
   // unchanged. My implementation is only one line long, and it's
   // simple.
-  return BLACK;
+  return scene.camera(camera)->xsect.object().color();
 }
 
 hdr_rgb blinn_phong_shader::shade(const scene& scene,
