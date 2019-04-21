@@ -874,19 +874,21 @@ std::optional<intersection> scene::intersect(const view_ray& ray) const noexcept
   // return an optional that contains the nearest intersection, or an empty
   // optional when there was no hit.
   bool hit = false;
-  double t0 = INT_MIN;
+  double t0 = 0.0;
   double t1 = INT_MAX;
-  
-  std::optional<intersection> option, option_empty;
-  for(size_t oh = 0; oh < objects_.size(); oh++) {
-    option = *objects_[oh]->intersect(ray, t0, t1);
-    if(option.has_value()) {
-      hit = true;
-      t1 = option->t();
+
+  std::optional<intersection> option;
+  for (auto& obj : objects()) {
+    std::optional<intersection> hit = obj->intersect(ray, t0, t1);
+    if (hit) {
+      if (hit->t() > 0 && hit->t() < t1) {
+        t1 = hit->t();
+        option = hit;
+      }
     }
   }
-  if(hit) { return option; }
-  else { return option_empty; }
+
+  return option;
 }
 
 hdr_image scene::render() const noexcept {
@@ -910,9 +912,9 @@ hdr_image scene::render() const noexcept {
     for (size_t x = 0; x < w; ++x) {
       vector2<double> uv = viewport().uv(x, y);
       view_ray vr = projection().compute_view_ray(camera(), uv[0], uv[1]);
-      std::optional<intersection> hit = scene().intersect(vr);
+      std::optional<intersection> hit = intersect(vr);
       if (hit.has_value()) {
-        result.pixel(x, y, shader().shade(scene(), camera(), *hit));
+        result.pixel(x, y, shader().shade(*this, camera(), *hit));
       } else {
         result.pixel(x, y, background());
       }
@@ -1002,7 +1004,33 @@ std::optional<intersection>
   // 4.4.1. Implement that algorithm carefully. Recall that a ray may
   // intersect a sphere at 0, 1, or 2 points; in the 2-point case, you
   // need to use the closer point (smaller t value).
-  return std::nullopt;
+
+  double dDotD = ray.direction() * ray.direction();
+  vector3<double> eMinC = ray.origin() - center();
+  double discriminant = pow(ray.direction() * eMinC, 2) - dDotD * (eMinC * eMinC - pow(radius(), 2));
+
+  std::optional<intersection> intersect;
+  if (discriminant >= 0) {
+    double t = -ray.direction() * eMinC + sqrt(discriminant);
+    t /= dDotD;
+
+    if (discriminant == 0) {
+      // Two solutions, calculate other solution and
+      // see if it's less than above solution. If so,
+      // swap them - we want the smaller one.
+
+      double t2 = -ray.direction() * eMinC - sqrt(discriminant);
+      t2 /= dDotD;
+      if (t2 > 0 && t2 < t) t = t2;
+    }
+
+    vector3<double> p = ray.origin() + ray.direction() * t;
+    vector3<double> normal = (p - center()) / radius();
+
+    intersect = intersection(this, p, normal, t);
+  }
+
+  return intersect;
 }
 
 std::optional<intersection>
