@@ -908,32 +908,14 @@ hdr_image scene::render() const noexcept {
 
   for (size_t y = 0; y < h; ++y) {
     for (size_t x = 0; x < w; ++x) {
-
-      // TODO: Fill in the body of this for loop, then delete these
-      // skeleton comments.
-      //
-      // This is the algorithm described by the pseudocode in section
-      // 4.6 of the textbook.
-      //
-      // To do that, perform the following steps:
-      //
-      // - Use the viewport object to compute the (u, v) corresponding
-      //   to (x, y)
-      //
-      // - Use the projection object to create the view ray based on
-      //   that (u, v)
-      //
-      // - Use the scene object to trace the view ray and find an
-      //   intersection. Use a t_upper_bound of infinity, which you
-      //   can obtain with the expression
-      //   std::numeric_limits<double>::infinity() .
-      //
-      // - If there is no intersection, paint result.pixel(x, y) with
-      //   the scene's background color.
-      //
-      // - Otherwise, use the shader object to compute the color for
-      //   result.pixel(x, y) based on the intersection object.
-
+      vector2<double> uv = viewport().uv(x, y);
+      view_ray vr = projection().compute_view_ray(camera(), uv[0], uv[1]);
+      std::optional<intersection> hit = scene().intersect(vr);
+      if (hit.has_value()) {
+        result.pixel(x, y, shader().shade(scene(), camera(), *hit));
+      } else {
+        result.pixel(x, y, background());
+      }
     }
   }
 
@@ -1019,7 +1001,7 @@ hdr_rgb flat_shader::shade(const scene& scene,
   // Hint: Just return the color of the intersecting object,
   // unchanged. My implementation is only one line long, and it's
   // simple.
-  return scene.camera(camera)->xsect.object().color();
+  return xsect.object().color();
 }
 
 hdr_rgb blinn_phong_shader::shade(const scene& scene,
