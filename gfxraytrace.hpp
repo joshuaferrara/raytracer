@@ -927,20 +927,10 @@ hdr_image scene::render() const noexcept {
 constexpr camera::camera(const vector3<double>& eye,
 	                       const vector3<double>& view_direction,
 	                       const vector3<double>& up) noexcept {
-
-  // TODO: Fill in the body of this function, then delete these
-  // skeleton comments.
-  
-  //
-  // Hint: This process is described in section 4.3 on pages
-  // 73-74. Those pages refer you back to the vector math described in
-  // Section 2.4.7. Don't forget that _w, _u, and _v all need to be
-  // normalized. My implementation is only 3 lines long.
-  // Note: eye = eye location
   eye_ = eye;
-  w_ = (view_direction / view_direction.magnitude()).normalized();
+  w_ = -view_direction.normalized();
   u_ = (up.cross(w_) / (up.cross(w_)).magnitude()).normalized();
-  v_ = (w_.cross(u_)).normalized();
+  v_ = (w_.cross(u_));
 }
 
 vector2<double> viewport::uv(size_t x, size_t y) const noexcept {
@@ -953,7 +943,7 @@ vector2<double> viewport::uv(size_t x, size_t y) const noexcept {
 view_ray orthographic_projection::compute_view_ray(const camera& c,
 					                                         double u,
 					                                         double v) const noexcept {
-  return view_ray(c.eye() +  c.u() * u + c.v() * v, c.w());
+  return view_ray(c.eye() +  c.u() * u + c.v() * v, -c.w());
 }
 
 view_ray perspective_projection::compute_view_ray(const camera& c,
