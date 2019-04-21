@@ -957,14 +957,7 @@ view_ray orthographic_projection::compute_view_ray(const camera& c,
 view_ray perspective_projection::compute_view_ray(const camera& c,
 					                                        double u,
 					                                        double v) const noexcept {
-
-  // TODO: Fill in the body of this function, then delete these
-  // skeleton comments.
-  //
-  // Hint: This process is described in section 4.3.2, specifically
-  // the pseudocode on the top of page 76. My implementation is only
-  // two lines long.
-  return view_ray(gfx::vector3<double>(), gfx::vector3<double>());
+  return view_ray(c.eye(), c.w() * -focal_length() + c.u() * u + c.v() * v);
 }
 
 hdr_rgb flat_shader::shade(const scene& scene,
