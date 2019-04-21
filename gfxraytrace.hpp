@@ -994,13 +994,6 @@ view_ray perspective_projection::compute_view_ray(const camera& c,
 hdr_rgb flat_shader::shade(const scene& scene,
 			                     const camera& camera,
 			                     const intersection& xsect) const noexcept {
-
-  // TODO: Fill in the body of this function, then delete these
-  // skeleton comments.
-  //
-  // Hint: Just return the color of the intersecting object,
-  // unchanged. My implementation is only one line long, and it's
-  // simple.
   return xsect.object().color();
 }
 
