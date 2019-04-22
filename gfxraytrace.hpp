@@ -1048,7 +1048,7 @@ std::optional<intersection>
     double t = -ray.direction() * eMinC + sqrt(discriminant);
     t /= dDotD;
 
-    if (discriminant == 0) {
+    if (discriminant > 0) {
       // Two solutions, calculate other solution and
       // see if it's less than above solution. If so,
       // swap them - we want the smaller one.
@@ -1059,7 +1059,7 @@ std::optional<intersection>
     }
 
     vector3<double> p = ray.origin() + ray.direction() * t;
-    vector3<double> normal = -(p - center()).normalized();
+    vector3<double> normal = (p - center()).normalized();
 
     intersect = intersection(this, p, normal, t);
   }
