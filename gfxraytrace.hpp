@@ -976,6 +976,16 @@ hdr_rgb blinn_phong_shader::shade(const scene& scene,
   // After evaluating equation (4.4), clamp the intensity values to
   // [0, 1]. Otherwise some very bright pixels could end up with
   // intensity values greater than 1.
+  //
+  // Blinn-Phong Equation:
+  //// L = k_a*I_a           + summation[k_d*max(0,n*l_i) + k_s*max(0, n*h_i)^p]
+  //// L = ambient component + diffuse component          + specular component
+  // k_a = ambient coefficient/ambient color; I_a = ambient light intensity
+  // k_d = diffuse coefficient/surface color; n = perpendicular to surface vector, l_i = direction vector of lightsource
+  // k_s = specular coefficient; p = phong exponent (10, 100, 1,000, or 10,000)
+  // h_i = half vector of ith light source (v+l)/|v+l| normalized
+  //
+  // might be helpful? --> https://janhalozan.com/2017/08/12/phong-shader/ 
   int p = 100;
   double result = 0.0;
   double i_A = 0.0;
