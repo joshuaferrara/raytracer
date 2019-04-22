@@ -959,7 +959,7 @@ hdr_rgb blinn_phong_shader::shade(const scene& scene,
   vector3<double> L = rgb_to_vector(ambient_color()) * ambient_coefficient(); // k_a * I_a
 
   for(auto& lit : scene.lights()) {
-    double I_i = 1.0; // lit->intensity();
+    double I_i = lit->intensity();
     vector3<double> norm = xsect.normal().normalized();
     vector3<double> l = (lit->location() - xsect.location()).normalized();
     vector3<double> v = (camera.eye() - xsect.location()).normalized();
