@@ -470,7 +470,7 @@ public:
   constexpr const hdr_rgb& ambient_color() const noexcept {
     return ambient_color_;
   }
-  constexpr double diffuse_coefficient () const noexcept {
+  constexpr double diffuse_coefficient() const noexcept {
     return specular_coefficient_;
   }
   constexpr double specular_coefficient() const noexcept {
@@ -976,6 +976,24 @@ hdr_rgb blinn_phong_shader::shade(const scene& scene,
   // After evaluating equation (4.4), clamp the intensity values to
   // [0, 1]. Otherwise some very bright pixels could end up with
   // intensity values greater than 1.
+  int p = 100;
+  double result = 0.0;
+  double i_A = 0.0;
+  double diffuse_component = 0.0;
+  double specular_component = 0.0;
+
+  for(auto& lit : scene.lights()) {
+    i_A += lit->intensity();
+
+    diffuse_component += diffuse_coefficient_ * max(0, (lit->location() * xsect.location()).normalized());
+
+    vector3<double> norm;
+    norm = (camera.eye() + lit->location()) / (camera.eye() + lit->location()).normalized();
+
+    specular_component += specular_coefficient_ * pow(max(0, lit->location() * norm), p);
+  } 
+  result += (ambient_coefficient_ * i_A) + diffuse_component + specular_component;
+
   return BLACK;
 }
 
