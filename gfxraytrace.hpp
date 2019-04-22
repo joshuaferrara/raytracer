@@ -471,7 +471,7 @@ public:
     return ambient_color_;
   }
   constexpr double diffuse_coefficient() const noexcept {
-    return specular_coefficient_;
+    return diffuse_coefficient_;
   }
   constexpr double specular_coefficient() const noexcept {
     return specular_coefficient_;
@@ -873,7 +873,6 @@ std::optional<intersection> scene::intersect(const view_ray& ray) const noexcept
   // ray hits the object; and if so, update the t range. At the end,
   // return an optional that contains the nearest intersection, or an empty
   // optional when there was no hit.
-  bool hit = false;
   double t0 = 0.0;
   double t1 = INT_MAX;
 
@@ -986,25 +985,42 @@ hdr_rgb blinn_phong_shader::shade(const scene& scene,
   // h_i = half vector of ith light source (v+l)/|v+l| normalized
   //
   // might be helpful? --> https://janhalozan.com/2017/08/12/phong-shader/ 
-  int p = 100;
-  double result = 0.0;
-  double i_A = 0.0;
-  double diffuse_component = 0.0;
-  double specular_component = 0.0;
+  
+  auto rgb_to_vector = [](auto& in) {
+    return vector3<double>{in.r(), in.g(), in.b()};
+  };
+
+  auto vector_to_rgb = [](auto& in) {
+    return hdr_rgb(in[0], in[1], in[2]);
+  };
+
+  vector3<double> objColor = rgb_to_vector(xsect.object().color());
+  vector3<double> L = rgb_to_vector(ambient_color()) * ambient_coefficient(); // k_a * I_a
 
   for(auto& lit : scene.lights()) {
-    i_A += lit->intensity();
+    double I_i = 1.0; // lit->intensity();
+    vector3<double> norm = xsect.normal().normalized();
+    vector3<double> l = (lit->location() - xsect.location()).normalized();
+    vector3<double> v = (camera.eye() - xsect.location()).normalized();
+    vector3<double> h = (v + l).normalized();
 
-    diffuse_component += diffuse_coefficient_ * max(0, (lit->location() * xsect.location()).normalized());
+    // k_d * I_i
+    vector3<double> diffuse = (rgb_to_vector(lit->color()) * diffuse_coefficient()) * I_i * fmax(0, norm * l);
+    L = L + diffuse;
 
-    vector3<double> norm;
-    norm = (camera.eye() + lit->location()) / (camera.eye() + lit->location()).normalized();
+    vector3<double> specular = (rgb_to_vector(lit->color()) * specular_coefficient()) * I_i * pow(fmax(0, norm * h), xsect.object().shininess());
+    L = L + specular;
+  }
 
-    specular_component += specular_coefficient_ * pow(max(0, lit->location() * norm), p);
-  } 
-  result += (ambient_coefficient_ * i_A) + diffuse_component + specular_component;
+  L[0] = fmin(1.0, L[0]);
+  L[1] = fmin(1.0, L[1]);
+  L[2] = fmin(1.0, L[2]);
 
-  return BLACK;
+  objColor[0] = objColor[0] * L[0];
+  objColor[1] = objColor[1] * L[1];
+  objColor[2] = objColor[2] * L[2];
+
+  return vector_to_rgb(objColor);
 }
 
 std::optional<intersection>
@@ -1043,7 +1059,7 @@ std::optional<intersection>
     }
 
     vector3<double> p = ray.origin() + ray.direction() * t;
-    vector3<double> normal = (p - center()) / radius();
+    vector3<double> normal = -(p - center()).normalized();
 
     intersect = intersection(this, p, normal, t);
   }
@@ -1113,7 +1129,10 @@ std::optional<intersection>
   if (beta < 0 || beta > 1 - gamma) return std::nullopt;
 
   vector3<double> p = ray.origin() + ray.direction() * t;
-  vector3<double> normal = p.normalized();
+
+  vector3<double> sideA = b() - a();
+  vector3<double> sideB = c() - a();
+  vector3<double> normal = sideA.cross(sideB).normalized();
 
   std::optional<intersection> hit = intersection(this, p, normal, t);
   return hit;
