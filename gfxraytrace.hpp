@@ -991,7 +991,7 @@ std::optional<intersection>
     double t_upper_bound) const noexcept {
 
   assert(t_min < t_upper_bound);
-  
+
   double dDotD = ray.direction() * ray.direction();
   vector3<double> eMinC = ray.origin() - center();
   double discriminant = pow(ray.direction() * eMinC, 2) - dDotD * (eMinC * eMinC - pow(radius(), 2));
@@ -1012,7 +1012,7 @@ std::optional<intersection>
     }
 
     vector3<double> p = ray.origin() + ray.direction() * t;
-    vector3<double> normal = ((p - center()) / 2).normalized();
+    vector3<double> normal = ((p - center()) / radius()).normalized();
 
     intersect = intersection(this, p, normal, t);
   }
