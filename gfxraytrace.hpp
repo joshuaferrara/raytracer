@@ -66,7 +66,7 @@
 #include <string>
 #include <variant>
 #include <vector>
-
+#include <cfloat> 
 #include <boost/property_tree/json_parser.hpp>
 
 #include "gfxalgebra.hpp"
@@ -860,15 +860,16 @@ scene scene::read_json(const std::string& path) noexcept(false) {
 ///////////////////////////////////////////////////////////////////////////////
 
 std::optional<intersection> scene::intersect(const view_ray& ray) const noexcept {
-  double t0 = 0.0;
-  double t1 = INT_MAX;
+  double min_t = DBL_MAX;
 
+  // Find object that view ray intersects
+  // that is closest to the camera.
   std::optional<intersection> option;
   for (auto& obj : objects()) {
-    std::optional<intersection> hit = obj->intersect(ray, t0, t1);
-    if (hit) {
-      if (hit->t() > 0 && hit->t() < t1) {
-        t1 = hit->t();
+    std::optional<intersection> hit = obj->intersect(ray, 0.0, min_t);
+    if (hit.has_value()) {
+      if (hit->t() > 0 && hit->t() < min_t) {
+        min_t = hit->t();
         option = hit;
       }
     }
@@ -878,7 +879,6 @@ std::optional<intersection> scene::intersect(const view_ray& ray) const noexcept
 }
 
 hdr_image scene::render() const noexcept {
-
   assert(camera_);
   assert(viewport_);
   assert(projection_);
@@ -889,7 +889,6 @@ hdr_image scene::render() const noexcept {
 
   size_t w = viewport_->x_resolution(),
          h = viewport_->y_resolution();
-
 
   hdr_image result(w, h, background_);
   assert(!result.is_empty());
@@ -922,8 +921,7 @@ constexpr camera::camera(const vector3<double>& eye,
 vector2<double> viewport::uv(size_t x, size_t y) const noexcept {
   double u = left() + (right() - left()) * ((double) x + 0.5) / x_resolution();
   double v = bottom() + (top() - bottom()) * ((double) y + 0.5) / y_resolution();
-  vector2<double> _x({u, v});
-  return _x;
+  return vector2<double>({u, v});
 }
 
 view_ray orthographic_projection::compute_view_ray(const camera& c,
@@ -947,11 +945,11 @@ hdr_rgb flat_shader::shade(const scene& scene,
 hdr_rgb blinn_phong_shader::shade(const scene& scene,
 				                          const camera& camera,
 				                          const intersection& xsect) const noexcept {
-  auto rgb_to_vector = [](auto& in) {
+  auto rgb_to_vector = [](hdr_rgb in) -> vector3<double> {
     return vector3<double>{in.r(), in.g(), in.b()};
   };
 
-  auto vector_to_rgb = [](auto& in) {
+  auto vector_to_rgb = [](vector3<double> in) -> hdr_rgb {
     return hdr_rgb(in[0], in[1], in[2]);
   };
 
@@ -960,26 +958,29 @@ hdr_rgb blinn_phong_shader::shade(const scene& scene,
 
   for(auto& lit : scene.lights()) {
     double I_i = lit->intensity();
-    vector3<double> norm = xsect.normal().normalized();
-    vector3<double> l = (lit->location() - xsect.location()).normalized();
-    vector3<double> v = (camera.eye() - xsect.location()).normalized();
-    vector3<double> h = (v + l).normalized();
+    vector3<double> norm = xsect.normal().normalized();                       // Surface normal
+    vector3<double> l = (lit->location() - xsect.location()).normalized();    // Light angle
+    vector3<double> v = (camera.eye() - xsect.location()).normalized();       // View angle
+    vector3<double> h = (v + l).normalized();                                 // Half angle
 
-    // k_d * I_i
+    // k_d * I_i * max(0, n * l)
     vector3<double> diffuse = (rgb_to_vector(lit->color()) * diffuse_coefficient()) * I_i * fmax(0, norm * l);
     L = L + diffuse;
 
+    // k_s * I_i * pow(max(0, n * h), p)
     vector3<double> specular = (rgb_to_vector(lit->color()) * specular_coefficient()) * I_i * pow(fmax(0, norm * h), xsect.object().shininess());
     L = L + specular;
   }
 
+  // Clamp values
   L[0] = fmin(1.0, L[0]);
   L[1] = fmin(1.0, L[1]);
   L[2] = fmin(1.0, L[2]);
 
-  objColor[0] = objColor[0] * L[0];
-  objColor[1] = objColor[1] * L[1];
-  objColor[2] = objColor[2] * L[2];
+  // Multiply object color by L
+  objColor[0] *= L[0];
+  objColor[1] *= L[1];
+  objColor[2] *= L[2];
 
   return vector_to_rgb(objColor);
 }
@@ -996,21 +997,22 @@ std::optional<intersection>
   vector3<double> eMinC = ray.origin() - center();
   double discriminant = pow(ray.direction() * eMinC, 2) - dDotD * (eMinC * eMinC - pow(radius(), 2));
 
+  // Verify that a solution exists
   std::optional<intersection> intersect;
   if (discriminant >= 0) {
     double t = -ray.direction() * eMinC + sqrt(discriminant);
     t /= dDotD;
 
     if (discriminant > 0) {
-      // Two solutions, calculate other solution and
-      // see if it's less than above solution. If so,
-      // swap them - we want the smaller one.
-
+      // Two solution case, so calculate other solution and
+      // see if it's less than above solution. If so, swap
+      // them - we want the smaller t-value.
       double t2 = -ray.direction() * eMinC - sqrt(discriminant);
       t2 /= dDotD;
       if (t2 > 0 && t2 < t) t = t2;
     }
 
+    // Calculate intersect point and sphere surface normal
     vector3<double> p = ray.origin() + ray.direction() * t;
     vector3<double> normal = ((p - center()) / radius()).normalized();
 
@@ -1030,21 +1032,21 @@ std::optional<intersection>
 
   vector3<double> d = ray.direction();
   vector3<double> e = ray.origin();
-  double x_a = a_[0];
-  double x_b = b_[0];
-  double x_c = c_[0];
+  double x_a = a()[0];
+  double x_b = b()[0];
+  double x_c = c()[0];
   double x_d = d[0];
   double x_e = e[0];
 
-  double y_a = a_[1];
-  double y_b = b_[1];
-  double y_c = c_[1];
+  double y_a = a()[1];
+  double y_b = b()[1];
+  double y_c = c()[1];
   double y_d = d[1];
   double y_e = e[1];
 
-  double z_a = a_[2];
-  double z_b = b_[2];
-  double z_c = c_[2];
+  double z_a = a()[2];
+  double z_b = b()[2];
+  double z_c = c()[2];
   double z_d = d[2];
   double z_e = e[2];
 
@@ -1056,17 +1058,21 @@ std::optional<intersection>
 
   gfx::vector<double, 3> rhsMatrix{x_a - x_e, y_a - y_e, z_a - z_e};
 
+  // Solve for beta, gamma and t
   vector3<double> solution = aMatrix.solve(rhsMatrix);
   double beta = solution[0];
   double gamma = solution[1];
   double t = solution[2];
 
+  // Make sure hit is inside triangle
   if (t < t_min || t > t_upper_bound) return std::nullopt;
   if (gamma < 0 || gamma > 1) return std::nullopt;
   if (beta < 0 || beta > 1 - gamma) return std::nullopt;
 
+  // Calculate intersect point
   vector3<double> p = ray.origin() + ray.direction() * t;
 
+  // Calculate triangle surface normal
   vector3<double> sideA = b() - a();
   vector3<double> sideB = c() - a();
   vector3<double> normal = sideA.cross(sideB).normalized();
