@@ -860,19 +860,6 @@ scene scene::read_json(const std::string& path) noexcept(false) {
 ///////////////////////////////////////////////////////////////////////////////
 
 std::optional<intersection> scene::intersect(const view_ray& ray) const noexcept {
-
-  // TODO: Fill in the body of this function, then delete these
-  // skeleton comments.
-  //
-  // Hint: This is the algorithm described in section 4.4.4 and the
-  // pseudocode on page 81.
-  //
-  // Basically, keep track of the range of t values in effect, and
-  // whether a hit was ever found; loop through all scene objects in a
-  // for loop; call that object's ::intersect function to see whether
-  // ray hits the object; and if so, update the t range. At the end,
-  // return an optional that contains the nearest intersection, or an empty
-  // optional when there was no hit.
   double t0 = 0.0;
   double t1 = INT_MAX;
 
@@ -960,32 +947,6 @@ hdr_rgb flat_shader::shade(const scene& scene,
 hdr_rgb blinn_phong_shader::shade(const scene& scene,
 				                          const camera& camera,
 				                          const intersection& xsect) const noexcept {
-
-  // TODO: Fill in the body of this function, then delete these
-  // skeleton comments.
-  //
-  // Hint: This algorithm is described in section 4.5, culminating in
-  // equation (4.4) in section 4.5.4. Implement that equation very
-  // carefully.
-  //
-  // We are assuming that every I_i is 1.0, so you don't need to
-  // include that coefficient; if we want a less-intense light, we
-  // change its color RGB values.
-  //
-  // After evaluating equation (4.4), clamp the intensity values to
-  // [0, 1]. Otherwise some very bright pixels could end up with
-  // intensity values greater than 1.
-  //
-  // Blinn-Phong Equation:
-  //// L = k_a*I_a           + summation[k_d*max(0,n*l_i) + k_s*max(0, n*h_i)^p]
-  //// L = ambient component + diffuse component          + specular component
-  // k_a = ambient coefficient/ambient color; I_a = ambient light intensity
-  // k_d = diffuse coefficient/surface color; n = perpendicular to surface vector, l_i = direction vector of lightsource
-  // k_s = specular coefficient; p = phong exponent (10, 100, 1,000, or 10,000)
-  // h_i = half vector of ith light source (v+l)/|v+l| normalized
-  //
-  // might be helpful? --> https://janhalozan.com/2017/08/12/phong-shader/ 
-  
   auto rgb_to_vector = [](auto& in) {
     return vector3<double>{in.r(), in.g(), in.b()};
   };
@@ -1030,15 +991,7 @@ std::optional<intersection>
     double t_upper_bound) const noexcept {
 
   assert(t_min < t_upper_bound);
-
-  // TODO: Fill in the body of this function, then delete these
-  // skeleton comments.
-  //
-  // Hint: This process is described very precisely in section
-  // 4.4.1. Implement that algorithm carefully. Recall that a ray may
-  // intersect a sphere at 0, 1, or 2 points; in the 2-point case, you
-  // need to use the closer point (smaller t value).
-
+  
   double dDotD = ray.direction() * ray.direction();
   vector3<double> eMinC = ray.origin() - center();
   double discriminant = pow(ray.direction() * eMinC, 2) - dDotD * (eMinC * eMinC - pow(radius(), 2));
@@ -1059,7 +1012,7 @@ std::optional<intersection>
     }
 
     vector3<double> p = ray.origin() + ray.direction() * t;
-    vector3<double> normal = (p - center()).normalized();
+    vector3<double> normal = ((p - center()) / 2).normalized();
 
     intersect = intersection(this, p, normal, t);
   }
@@ -1074,22 +1027,6 @@ std::optional<intersection>
     double t_upper_bound) const noexcept {
 
   assert(t_min < t_upper_bound);
-
-  // TODO: Fill in the body of this function, then delete these
-  // skeleton comments.
-  //
-  // Hint: This process is described very precisely in section
-  // 4.4.2.
-  //
-  // You can use the gfx::matrix::solve function you implemented in
-  // project 1. The textbook writes out how to use Cramer's rule here,
-  // and it's OK to follow those instructions, but it's easier and
-  // more concise to just call gfx::matrix::solve.
-  //
-  // After you compute the t, gamma, and beta values corresponding to
-  // the intersection, make sure that you compare gamma and beta
-  // precisely as described in the pseudocode on the bottom of page
-  // 79.
 
   vector3<double> d = ray.direction();
   vector3<double> e = ray.origin();
