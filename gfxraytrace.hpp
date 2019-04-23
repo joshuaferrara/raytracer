@@ -1012,6 +1012,9 @@ std::optional<intersection>
       if (t2 > 0 && t2 < t) t = t2;
     }
 
+    // Make sure hit is in t-range
+    if (t > t_upper_bound || t < t_min) return std::nullopt;
+
     // Calculate intersect point and sphere surface normal
     vector3<double> p = ray.origin() + ray.direction() * t;
     vector3<double> normal = ((p - center()) / radius()).normalized();
