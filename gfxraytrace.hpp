@@ -866,6 +866,7 @@ std::optional<intersection> scene::intersect(const view_ray& ray) const noexcept
   // Find object that view ray intersects
   // that is closest to the camera.
   std::optional<intersection> option;
+
   for (auto& obj : objects()) {
     std::optional<intersection> hit = obj->intersect(ray, 0.0, min_t);
     if (hit.has_value()) {
@@ -894,16 +895,34 @@ hdr_image scene::render() const noexcept {
   hdr_image result(w, h, background_);
   assert(!result.is_empty());
 
-  #pragma omp parallel for collapse(2)
-  for (size_t y = 0; y < h; ++y) {
-    for (size_t x = 0; x < w; ++x) {
-      vector2<double> uv = viewport().uv(x, y);
-      view_ray vr = projection().compute_view_ray(camera(), uv[0], uv[1]);
-      std::optional<intersection> hit = intersect(vr);
-      if (hit.has_value()) {
-        result.pixel(x, y, shader().shade(*this, camera(), *hit));
-      } else {
-        result.pixel(x, y, background());
+  size_t total_pixels = (w * h) / 100;
+  size_t step_size = 100;
+  size_t steps_completed = 0;
+
+  #pragma omp parallel 
+  {
+    size_t local_count = 0;
+    #pragma omp for collapse(2)
+    for (size_t y = 0; y < h; ++y) {
+      for (size_t x = 0; x < w; ++x) {
+        vector2<double> uv = viewport().uv(x, y);
+        view_ray vr = projection().compute_view_ray(camera(), uv[0], uv[1]);
+        std::optional<intersection> hit = intersect(vr);
+        if (hit.has_value()) {
+          result.pixel(x, y, shader().shade(*this, camera(), *hit));
+        } else {
+          result.pixel(x, y, background());
+        }
+
+        if (local_count++ % step_size == step_size - 1) {
+          #pragma omp atomic
+          ++steps_completed;
+
+          if (steps_completed % step_size == 1) {
+            #pragma omp critical
+            std::cout << "Progress: " << steps_completed << " of " << total_pixels << " (" << std::fixed << std::setprecision(1) << (100.0*steps_completed/total_pixels) << "%)\n";
+          }
+        }
       }
     }
   }
