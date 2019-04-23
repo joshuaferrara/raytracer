@@ -893,16 +893,31 @@ hdr_image scene::render() const noexcept {
   hdr_image result(w, h, background_);
   assert(!result.is_empty());
 
+  auto frand = [&]() {
+    double f = (double) rand() / RAND_MAX;
+    return 0 + f * (1 - 0);
+  };
+
   for (size_t y = 0; y < h; ++y) {
     for (size_t x = 0; x < w; ++x) {
-      vector2<double> uv = viewport().uv(x, y);
-      view_ray vr = projection().compute_view_ray(camera(), uv[0], uv[1]);
-      std::optional<intersection> hit = intersect(vr);
-      if (hit.has_value()) {
-        result.pixel(x, y, shader().shade(*this, camera(), *hit));
-      } else {
-        result.pixel(x, y, background());
+      hdr_rgb color;
+
+      size_t aa_grid_size = 4;
+      for (size_t p = 0; p < aa_grid_size; p++) {
+        for (size_t q = 0; q < aa_grid_size; q++) {
+          vector2<double> uv = viewport().uv(x + (p + frand()) / aa_grid_size, y + (q + frand()) / aa_grid_size);
+          view_ray vr = projection().compute_view_ray(camera(), uv[0], uv[1]);
+          std::optional<intersection> hit = intersect(vr);
+          if (hit.has_value()) {
+            color = color + shader().shade(*this, camera(), *hit);
+          } else {
+            color = color + background();
+          }
+        }
       }
+
+      color = color / pow(aa_grid_size, 2);
+      result.pixel(x, y, color);
     }
   }
 
