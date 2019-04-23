@@ -108,6 +108,23 @@ public:
     return std::equal(intensities_.begin(), intensities_.end(), rhs.intensities_.begin());
   }
 
+  constexpr hdr_rgb operator+(const hdr_rgb& rhs) const noexcept {
+    hdr_rgb result;
+    for (int i = 0; i < intensities_.size(); i++) {
+      result.intensities_[i] = intensities_[i] + rhs.intensities_[i];
+    }
+
+    return result;
+  }
+
+  constexpr hdr_rgb operator/(float rhs) const noexcept {
+    hdr_rgb result;
+    for (int i = 0; i < intensities_.size(); i++) {
+      result.intensities_[i] = intensities_[i] / rhs;
+    }
+    return result;
+  }
+
   // Approximate equality test.
   constexpr bool approx_equal(const hdr_rgb& other, hdr_intensity epsilon) const {
     return (hdr_intensity_approx_equal(r(), other.r(), epsilon) &&
