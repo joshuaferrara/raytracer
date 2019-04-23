@@ -1,5 +1,5 @@
 
-CLANG_FLAGS = -std=c++17 -Wall -O -g
+CLANG_FLAGS = -std=c++17 -Wall -O -g -fopenmp=libomp
 PNG_FLAGS = `libpng-config --cflags --ldflags`
 GTEST_FLAGS = -lpthread -lgtest_main -lgtest  -lpthread
 

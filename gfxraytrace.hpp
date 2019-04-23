@@ -68,6 +68,7 @@
 #include <vector>
 #include <cfloat> 
 #include <boost/property_tree/json_parser.hpp>
+#include <omp.h>
 
 #include "gfxalgebra.hpp"
 #include "gfximage.hpp"
@@ -893,6 +894,7 @@ hdr_image scene::render() const noexcept {
   hdr_image result(w, h, background_);
   assert(!result.is_empty());
 
+  #pragma omp parallel for collapse(2)
   for (size_t y = 0; y < h; ++y) {
     for (size_t x = 0; x < w; ++x) {
       vector2<double> uv = viewport().uv(x, y);
