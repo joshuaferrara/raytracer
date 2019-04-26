@@ -925,6 +925,7 @@ hdr_image scene::render() const noexcept {
 
         result.pixel(x, y, color);
 
+        // TODO: this likely impacts performance, so we should refactor it
         #pragma omp critical
         preview.draw_point(x, y, color.toArray()).display(render_preview);
 
