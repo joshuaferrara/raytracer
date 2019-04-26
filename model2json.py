@@ -1,4 +1,9 @@
 #!/usr/bin/env python3
+# Converts STL/OBJ files into a JSON file
+# formatted for use with mrraytracer.
+# Allows a user to specify scale, rotate
+# and translation transformations on the
+# input file.
 import argparse
 import json
 import sys
@@ -6,16 +11,16 @@ import math
 
 import numpy
 from stl import mesh
-
 from enum import Enum
+from multiprocessing import Pool
 
 output = {
     "command_line": "",
-    "camera_eye": (0.0, 250.0, 50.0),
+    "camera_eye": (0.0, 100.0, 20.0),
     "camera_up": (0, 0, -1),
     "camera_view": (0, -1, 0),
-    "x_resolution": 1000,
-    "y_resolution": 1000,
+    "x_resolution": 200,
+    "y_resolution": 200,
     "viewport_left": -1,
     "viewport_top": 1,
     "viewport_right": 1,
@@ -38,9 +43,13 @@ output = {
             "location": (-100.0, 0.0, 0.0),
             "intensity": 0.25,
             "color": (1.0, 1.0, 1.0)
+        },
+        {
+            "location": (0.0, 250.0, 50.0),
+            "intensity": 0.75,
+            "color": (1.0, 1.0, 1.0)
         }
     ],
-    "spheres": [],
     "triangles": []
 };
 
@@ -97,24 +106,62 @@ def rotate(vector, axis, degrees):
         rotate_matrix[1][1] = math.cos(theta)
 
     return rotate_matrix * vector_to_matrix(vector)
-        
+
+
+scale_factors = [1.0, 1.0, 1.0]
+rotate_factors = [0, 0, 0]
+translate_factors = [1.0, 1.0, 1.0]
+def perform_translations(vector):
+    global scale_factors
+    global rotate_factors
+    global translate_factors
+
+    for v in vector:
+        # Scale -> Rotate -> Translate
+        if scale_factors != [1.0, 1.0, 1.0]:        
+            scaled = scale(v, scale_factors[0], scale_factors[1], scale_factors[2])                    
+            v[0] = scaled[0]
+            v[1] = scaled[1]
+            v[2] = scaled[2]
+
+        if rotate_factors != [0, 0, 0]:
+            rotated = rotate(v, 'x', rotate_factors[0])
+            rotated = rotate(rotated, 'y', rotate_factors[1])
+            rotated = rotate(rotated, 'z', rotate_factors[2])
+            
+            v[0] = rotated[0]
+            v[1] = rotated[1]
+            v[2] = rotated[2]
+
+        if translate_factors != [1.0, 1.0, 1.0]:
+            translated = translate(v, translate_factors[0], translate_factors[1], translate_factors[2])
+            v[0] = translated[0]
+            v[1] = translated[1]
+            v[2] = translated[2]
+    
+    return vector
 
 def main():
-    parser = argparse.ArgumentParser(description="Converts models into a JSON file.")
-    
-    parser.add_argument("inputFile", type=argparse.FileType('r'), default=sys.stdin)
-    parser.add_argument('--scale', type=str, help="scale input by x,y,z")
-    parser.add_argument('--translate', type=str, help="translate input by x,y,z")
-    parser.add_argument('--rotate', type=str, help="rotate input by x,y,z degrees about x,y,z axis")
+    global scale_factors
+    global rotate_factors
+    global translate_factors
 
-    parser.add_argument("outputFile", type=argparse.FileType('w'), default=sys.stdout)
+    parser = argparse.ArgumentParser(description="Converts models into a mrraytracer JSON file.")
+    
+    parser.add_argument('inputFile', type=argparse.FileType('r'), default=sys.stdin, help="STL/OBJ model")
+    parser.add_argument('--scale', type=str, help="scale input by x,y,z where 1 = 100%%")
+    parser.add_argument('--translate', type=str, help="translate input by x,y,z")
+    parser.add_argument('--rotate', type=str, help="rotate input by x,y,z degrees about x,y,z axes")
+
+    parser.add_argument('outputFile', type=argparse.FileType('w'), default=sys.stdout, help="mrraytracer .json output")
     args = parser.parse_args(sys.argv[1:])
 
+    # Store the command we used to generate the JSON file 
+    # inside of the JSON file in case anyone is curious.
     output["command_line"] = " ".join(sys.argv)
 
     # 3D Transformations - Slide 3
-    scale_factors = [1.0, 1.0, 1.0]
-    if args.scale and len(args.scale.split(',')) > 1:
+    if args.scale and len(args.scale.split(',')) == 3:
         user_scale = numpy.array([float(v) for v in args.scale.split(',')])
         scale_factors = (user_scale * scale_factors).tolist()
     else:
@@ -122,20 +169,18 @@ def main():
         scale_factors = (user_scale * scale_factors).tolist()
 
     # 3D Transformations - Slide 3
-    if args.rotate and len(args.rotate.split(',')) > 1:
+    if args.rotate and len(args.rotate.split(',')) == 3:
         rotate_factors = [float(v) for v in args.rotate.split(',')]
-    else:
-        rotate_factors = [0, 0, 0]
 
     # 3D Transformations - Slide 2
-    translate_factors = [1.0, 1.0, 1.0]
-    if args.translate and len(args.translate.split(',')) > 1:
+    if args.translate and len(args.translate.split(',')) == 3:
         user_translate = numpy.array([float(v) for v in args.translate.split(',')])
         translate_factors = (user_translate * translate_factors).tolist()
     else:
         user_translate = numpy.ones(3) * 1
         translate_factors = (user_translate * translate_factors).tolist()
-        
+    
+    vectors = None
 
     fileName = args.inputFile.name
     if ".obj" in fileName:
@@ -145,97 +190,45 @@ def main():
         lines = args.inputFile.readlines()
         for line in lines:
             tokens = line.split()
-            if line.startswith('v'):
+            if line.startswith('v') and not (line.startswith('vt') or line.startswith('vn') or line.startswith('vp')):
                 assert(len(tokens) == 4)
-                vertices.append([ float(tok) for tok in tokens[1:] ])
+                vertices.append([ float(tok.split('/')[0]) for tok in tokens[1:] ])
             elif line.startswith('f'):
                 assert(len(tokens) == 4)
-                faces.append([ int(tok) for tok in tokens[1:] ])
+                faces.append([ int(tok.split('/')[0]) for tok in tokens[1:] ])
             else:
                 # comment
                 pass
 
+        vectors = []
         for face in faces:
-            a = [ v for v in vertices[face[0] - 1] ]
-            b = [ v for v in vertices[face[1] - 1] ]
-            c = [ v for v in vertices[face[2] - 1] ]
-            vector = [a, b, c]
-
-            # Scale -> Rotate -> Translate
-            if args.scale:
-                for v in vector:
-                    scaled = scale(v, scale_factors[0], scale_factors[1], scale_factors[2])                    
-                    v[0] = float(scaled[0])
-                    v[1] = float(scaled[1])
-                    v[2] = float(scaled[2])
-
-            if args.rotate:
-                for v in vector:
-                    rotated = rotate(v, 'x', rotate_factors[0])
-                    rotated = rotate(rotated, 'y', rotate_factors[1])
-                    rotated = rotate(rotated, 'z', rotate_factors[2])
-                    
-                    v[0] = float(rotated[0])
-                    v[1] = float(rotated[1])
-                    v[2] = float(rotated[2])
-
-            if args.translate:
-                for v in vector:
-                    translated = translate(v, translate_factors[0], translate_factors[1], translate_factors[2])
-                    v[0] = float(translated[0])
-                    v[1] = float(translated[1])
-                    v[2] = float(translated[2])
-
-            output["triangles"].append({
-                "color": (0.8, 0.95, 0.7),
-                "shininess": 4.0,
-                "a": vector[0],
-                "b": vector[1],
-                "c": vector[2]
-            })
-
-        args.outputFile.write(json.dumps(output))
+            a = [v for v in vertices[face[0] - 1]]
+            b = [v for v in vertices[face[1] - 1]]
+            c = [v for v in vertices[face[2] - 1]]
+            vectors.append(numpy.array([a, b, c]))
     elif ".stl" in fileName:
+        # Create mesh object from input file
         input_mesh = mesh.Mesh.from_file(args.inputFile.name)
-
-        for vector in input_mesh.vectors:
-            # Scale -> Rotate -> Translate
-            if args.scale:
-                for v in vector:
-                    scaled = scale(v, scale_factors[0], scale_factors[1], scale_factors[2])                    
-                    v[0] = float(scaled[0])
-                    v[1] = float(scaled[1])
-                    v[2] = float(scaled[2])
-
-            if args.rotate:
-                for v in vector:
-                    rotated = rotate(v, 'x', rotate_factors[0])
-                    rotated = rotate(rotated, 'y', rotate_factors[1])
-                    rotated = rotate(rotated, 'z', rotate_factors[2])
-                    
-                    v[0] = float(rotated[0])
-                    v[1] = float(rotated[1])
-                    v[2] = float(rotated[2])
-
-            if args.translate:
-                for v in vector:
-                    translated = translate(v, translate_factors[0], translate_factors[1], translate_factors[2])
-                    v[0] = float(translated[0])
-                    v[1] = float(translated[1])
-                    v[2] = float(translated[2])
-
-            output["triangles"].append({
-                "color": (0.8, 0.95, 0.7),
-                "shininess": 4.0,
-                "a": [v for v in vector[0].tolist()],
-                "b": [v for v in vector[1].tolist()],
-                "c": [v for v in vector[2].tolist()]
-            })
-
-        args.outputFile.write(json.dumps(output))
+        vectors = input_mesh.vectors
     else:
         print("Unsupported file type.")
         exit(1)
+
+    # Run transformation across multiple threads
+    transform_pool = Pool(processes=8)
+    print(f"Transforming {len(vectors)} vectors")
+    triangles = transform_pool.map(perform_translations, vectors)
+    output["triangles"].append([{
+        "color": (0.8, 0.95, 0.7),
+        "shininess": 4.0,
+        "a": [v for v in vector[0].tolist()],
+        "b": [v for v in vector[1].tolist()],
+        "c": [v for v in vector[2].tolist()]
+    } for vector in triangles])
+
+    output["triangles"] = output["triangles"][0]
+
+    args.outputFile.write(json.dumps(output))    
 
 if __name__ == '__main__':
     main()
