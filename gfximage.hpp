@@ -155,6 +155,14 @@ public:
 
   // Swap contents with another hdr_rgb.
   void swap(hdr_rgb& other) { intensities_.swap(other.intensities_); }
+
+  float* toArray() {
+    float* output = new float[3];
+    output[0] = r();
+    output[1] = g();
+    output[2] = b();
+    return output;
+  }
 };
 
 // The 16 named web colors, see

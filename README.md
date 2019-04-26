@@ -1,6 +1,8 @@
 # project-3-starter
 Project 3: raytracer
 
+![Render preview](examples/bunny-render-preview.gif)
+
 Takes in a `mrraytracer` scene JSON file and renders it to a PNG file. This implementation uses OpenMP for parallel computation of rendering rays: `sudo apt install libomp-dev`. 
 
 ## Group members:

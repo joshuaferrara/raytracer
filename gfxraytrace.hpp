@@ -70,8 +70,12 @@
 #include <boost/property_tree/json_parser.hpp>
 #include <omp.h>
 
+#include "CImg.h"
+
 #include "gfxalgebra.hpp"
 #include "gfximage.hpp"
+
+using namespace cimg_library;
 
 namespace gfx {
 
@@ -899,6 +903,10 @@ hdr_image scene::render() const noexcept {
   size_t step_size = 100;
   size_t steps_completed = 0;
 
+  CImg<float> preview(w, h, 1, 3, 0);
+  preview.fill(0);
+  CImgDisplay render_preview(preview, "Render preview");
+
   #pragma omp parallel 
   {
     size_t local_count = 0;
@@ -908,11 +916,17 @@ hdr_image scene::render() const noexcept {
         vector2<double> uv = viewport().uv(x, y);
         view_ray vr = projection().compute_view_ray(camera(), uv[0], uv[1]);
         std::optional<intersection> hit = intersect(vr);
+        hdr_rgb color;
         if (hit.has_value()) {
-          result.pixel(x, y, shader().shade(*this, camera(), *hit));
+          color = shader().shade(*this, camera(), *hit);
         } else {
-          result.pixel(x, y, background());
+          color = background();
         }
+
+        result.pixel(x, y, color);
+
+        #pragma omp critical
+        preview.draw_point(x, y, color.toArray()).display(render_preview);
 
         if (local_count++ % step_size == step_size - 1) {
           #pragma omp atomic
