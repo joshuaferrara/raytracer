@@ -924,10 +924,7 @@ hdr_image scene::render() const noexcept {
         }
 
         result.pixel(x, y, color);
-
-        // TODO: this likely impacts performance, so we should refactor it
-        #pragma omp critical
-        preview.draw_point(x, y, color.toArray()).display(render_preview);
+        preview.draw_point(x, y, color.toArray());
 
         if (local_count++ % step_size == step_size - 1) {
           #pragma omp atomic
@@ -935,7 +932,10 @@ hdr_image scene::render() const noexcept {
 
           if (steps_completed % step_size == 1) {
             #pragma omp critical
-            std::cout << "Progress: " << steps_completed << " of " << total_pixels << " (" << std::fixed << std::setprecision(1) << (100.0*steps_completed/total_pixels) << "%)\n";
+            {
+              std::cout << "Progress: " << steps_completed << " of " << total_pixels << " (" << std::fixed << std::setprecision(1) << (100.0*steps_completed/total_pixels) << "%)\n";
+              preview.display(render_preview);
+            }
           }
         }
       }
