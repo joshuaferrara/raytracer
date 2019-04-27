@@ -586,6 +586,38 @@ public:
                                                 double t_upper_bound) const noexcept;
 };
 
+class bounding_box : public abstract_scene_object {
+  private:
+    vector3<double> botLeft;
+    vector3<double> topRight;
+
+  public:
+    bounding_box() {}
+
+    void expand(bounding_box bbox) {
+      botLeft[0] = fmin(bbox.bottomLeft()[0], botLeft[0]);
+      botLeft[1] = fmin(bbox.bottomLeft()[1], botLeft[1]);
+      botLeft[2] = fmin(bbox.bottomLeft()[2], botLeft[2]);
+
+      topRight[0] = fmax(bbox.topRight()[0], topRight[0]);
+      topRight[1] = fmax(bbox.topRight()[1], topRight[1]);
+      topRight[2] = fmax(bbox.topRight()[2], topRight[2]);
+    }
+
+    vector3<double> bottomLeft() {
+      return botLeft;
+    };
+
+    vector3<double> topRight() {
+      return topRight;
+    };
+
+    virtual std::optional<intersection> intersect(const view_ray& ray,
+                                                double t_min,
+                                                double t_upper_bound) const noexcept {
+      };
+}
+
 // A scene object that is a 3D triangle.
 class scene_triangle : public abstract_scene_object {
 private:
@@ -619,6 +651,14 @@ public:
   virtual std::optional<intersection> intersect(const view_ray& ray,
                                                 double t_min,
                                                 double t_upper_bound) const noexcept;
+
+  bounding_box get_bounding_box() {
+
+  }
+
+  vector3<double> get_midpoint() {
+    return (a() + b() + c()) / 3;
+  }
 };
 
 // A point_light represents a light source that gives off the same
